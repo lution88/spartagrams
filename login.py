@@ -23,6 +23,15 @@ import datetime
 import hashlib
 
 
+# token확인 함수
+def check_token():
+    # 현재 이용자의 컴퓨터에 저장된 cookie 에서 mytoken 을 가져옵니다.
+    token_receive = request.cookies.get('mytoken')
+    # token을 decode하여 payload를 가져오고, payload 안에 담긴 유저 id를 통해 DB에서 유저의 정보를 가져옵니다.
+    payload = jwt.decode(token_receive, SECRET_KEY, algorithms=['HS256'])
+    return db.user.find_one({'id': payload['id']}, {'_id': False})
+
+
 #################################
 ##  HTML을 주는 부분             ##
 #################################
@@ -146,23 +155,38 @@ def api_valid():
     except jwt.exceptions.DecodeError:
         return jsonify({'result': 'fail', 'msg': '로그인 정보가 존재하지 않습니다.'})
 
+##################아이디 찾기########################
+@app.route('/api/find', methods=['POST'])
+def find_id_email():
+    username_receive = request.form['username_give']
+    useremail_receive = request.form['useremail_give']
+    user_info = db.user.find_one({'name': username_receive, 'email': useremail_receive})
+    print(user_info)
+    return jsonify({'result': user_info['id']})
+##오브젝트 아이디값 같이 안넘어가게 하자###
+
+#################################################
+##################아이디 찾기 페이지#####################
+@app.route('/find')
+def find_id():
+    return render_template('find_ID_Password.html')
+
+
+#####################################################
 
 #####################정훈님 코드#######################
 @app.route('/posting')
 def posting():
-    return render_template('posting2.html')
+    return render_template('posting.html')
 
-
-# @app.route("/posting", methods=["GET"])
-# # def posting_list_get():
-#     # posting_num = list(db.posting.find({'num'}, {'_id': False}))
-#     # return jsonify({'posting_list': posting_num})
 
 
 @app.route('/user', methods=['POST'])
 def posting_list_post():
+
     posting_list = list(db.posting.find({}, {'_id': False}))
     count = len(posting_list) + 1
+
 
     doc = {
         'num': count
@@ -172,6 +196,9 @@ def posting_list_post():
 
 @app.route('/posting', methods=['POST'])
 def posting_post():
+    userinfo = check_token()
+
+    user_receive = userinfo['id']
     url_receive = request.form['url_give']
     mylocation_receive = request.form['mylocation_give']
     mytime_receive = request.form['mytime_give']
@@ -182,6 +209,7 @@ def posting_post():
     count = len(posting_list) + 1
 
     doc = {
+        'id': user_receive,
         'num': count,
         'url': url_receive,
         'mylocation': mylocation_receive,
@@ -204,16 +232,9 @@ def feed_home():
 @app.route("/home", methods=["GET"])
 def show_user():
     user_post = list(db.posting.find({}, {'_id': False}))
-    comment_post = list(db.comments.find({}, {'_id': False}))
+    # comment_post = list(db.comments.find({}, {'_id': False}))
 
-    return jsonify({'post':user_post, 'post-com':comment_post})
-
-# @app.route("/homeid", methods=["GET"])
-# def find_id():
-#     get_id = list(db.user.find({}, {'_id': False}))
-#
-#     return jsonify({'info':get_id})
-
+    return jsonify({'post':user_post})
 
 @app.route("/home", methods=["POST"])
 def feed_post():
@@ -233,11 +254,55 @@ def feed_post():
     return jsonify({'msg':'저장 완료!'})
 
 @app.route("/homecom", methods=["GET"])
-def show_id():
+def show_comments():
     comment = list(db.comments.find({}, {'_id': False}))
 
-    return jsonify({'com':comment})
+    return jsonify({'com': comment})
 
+#####################mypage부분#####################
+@app.route("/homeid", methods=["GET"])
+def my_id():
+    userinfo = check_token()
+
+    user_receive = userinfo['id']
+
+    # user_writer_id = db.posting.find_one({'writerid': user_receive}, {'_id' : False})
+    return jsonify({'userid':user_receive})
+    # return render_template('feed_index.html', user_id= user_writer_id)
+
+@app.route("/mypage", methods=["GET", "POST"])
+def mypage_post():
+    if request.method == "POST":
+
+        #1번 체크토큰 해준다
+        userinfo = check_token()
+
+        url_receive = request.form['img_give']
+        #2번 아이디 받아온다.
+        user_receive = userinfo['id']
+
+        profile_list = list(db.profile.find({}, {'_id': False}))
+
+        #3번 db에 넣어준다.
+        doc = {
+            'id': user_receive,
+            'url': url_receive,
+        }
+
+        if len(profile_list) < 1:
+            db.profile.insert_one(doc)
+        else:
+            db.profile.update_one({'id': user_receive}, {'$set': {'url': url_receive}})
+
+        return jsonify({'msg': '사진 업로드 완료'})
+
+    else:
+        userinfo = check_token()
+
+        profile = db.profile.find_one({'id': userinfo['id']})
+        posts = list(db.posting.find({'id': userinfo['id']}, {'_id': False}))
+        print(posts)
+        return render_template('mypage.html', user= userinfo, profile= profile, posts= posts)
 
 
 if __name__ == '__main__':
