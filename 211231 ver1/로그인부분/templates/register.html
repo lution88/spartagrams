@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+    <head>
+
+        <!-- Webpage Title -->
+        <title>Hello, world!</title>
+
+        <!-- Required meta tags -->
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+        <!-- JS -->
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.js"></script>
+
+        <script>
+            // 간단한 회원가입 함수입니다.
+            // 아이디, 비밀번호, 닉네임을 받아 DB에 저장합니다.
+            function register() {
+                $.ajax({
+                    type: "POST",
+                    url: "/api/register",
+                    data: {
+                        id_give: $('#userid').val(),
+                        pw_give: $('#userpw').val(),
+                        name_give: $('#username').val(),
+                        email_give: $('#useremail').val()
+                    },
+                    success: function (response) {
+                        if (response['result'] == 'success') {
+                            alert('회원가입이 완료되었습니다.')
+                            window.location.href = '/login'
+                        } else {
+                            alert(response['msg'])
+                        }
+                    }
+                })
+            }
+            function backward(){
+                window.location.href = '/login'
+            }
+
+            function is_userid(asValue) {
+                var regExp = /^(?=.*[a-zA-Z])[-a-zA-Z0-9_.]{2,10}$/;
+                return regExp.test(asValue);
+            }
+
+            function check_dup() {
+                let userid = $("#userid").val()
+                console.log(username)
+                if (userid == "") {
+                    alert('아이디를 입력해 주세요.')
+                    return;
+                }
+                if (!is_userid(userid)) {
+                    alert("아이디의 형식을 확인해주세요. 영문과 숫자, 일부 특수문자(._-) 사용 가능. 2-10자 길이")
+                    return;
+                }
+
+                $.ajax({
+                    type: "POST",
+                    url: "/check_dup",
+                    data: {userid_give: userid},
+                    success: function (response) {
+
+                        if (response["exists"]) {
+                            alert("이미 존재하는 아이디입니다.")
+                            window.location.href = '/register'
+                        } else {
+                            alert("사용 할 수 있는 아이디입니다.")
+                        }
+                    }
+                });
+            }
+
+
+
+        </script>
+    </head>
+    <body>
+        <div class="section has-text-centered">
+            <h1 class="title">회원가입 페이지</h1>
+            <div class="container" style="width:60%">
+                <div class="field is-horizontal">
+                    <div class="field-label is-normal">
+                        <label class="label" for="userid">ID</label>
+                    </div>
+                    <div class="field-body">
+                        <div class="field">
+                            <div class="control">
+                                <input type="text" class="input" id="userid" aria-describedby="emailHelp"
+                                       placeholder="My ID">
+                                <button onclick="check_dup()">ID중복확인</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="field is-horizontal">
+                    <div class="field-label is-normal">
+                        <label class="label" for="userpw">PW</label>
+                    </div>
+                    <div class="field-body">
+                        <div class="field">
+                            <div class="control">
+                                <input type="password" class="input" id="userpw" placeholder="My Password">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="field is-horizontal">
+                    <div class="field-label is-normal">
+                        <label class="label" for="username">NAME</label>
+                    </div>
+                    <div class="field-body">
+                        <div class="field">
+                            <div class="control">
+                                <input type="text" class="input" id="username" placeholder="My Name">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="field is-horizontal">
+                    <div class="field-label is-normal">
+                        <label class="label" for="useremail">E-Mail</label>
+                    </div>
+                    <div class="field-body">
+                        <div class="field">
+                            <div class="control">
+                                <input type="text" class="input" id="useremail" placeholder="My Email">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button class="button is-primary" onclick="register()">회원가입</button>
+                <button class="button is-primary" onclick="backward()">로그인페이지로</button>
+            </div>
+        </div>
+    </body>
+</html>
