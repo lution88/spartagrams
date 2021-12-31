@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="posting_style.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            have_token();
+        });
+
+        function have_token(){
+            $.ajax({
+                type: "GET",
+                url: "/api/user",
+                data: {},
+                success: function(response){
+                    if (response['result'] == 'success') {
+                        alert('게시글을 작성해 주세요')
+                        postid = response['id']
+                        $.cookie('mytoken', response['token']);
+                        return
+                    } else {
+                        alert('로그인 창으로 가서 토큰 받아오세요')
+                        window.location.href ='/login'
+                    }
+                }
+            })
+        }
+
+        function save_posting() {
+            let url = $('.url-window').val()
+            let mylocation = $('.mylocation-window').val()
+            let mytime = $('.mytime-window').val()
+            let text = $('.mytextbox-window').val()
+
+            $.ajax({
+                type: "POST",
+                url: "/posting",
+                data: {url_give: url, mylocation_give: mylocation, mytime_give: mytime, mytext_give: text, postid_give: postid},
+                success: function (response) {
+                    alert(response['msg'])
+                    window.location.reload()
+                }
+            })
+        }
+        function home(){
+            window.location.href = '/'
+        }
+    </script>
+    <title>Posting</title>
+</head>
+<body>
+<div id="posting-container">
+    <!--헤더-->
+    <div id="posting-header">
+        <div class="back_button">
+            <button onclick="home()">홈으로 돌아가기</button>
+        </div>
+        <div class="new_post">
+            <p>새 게시물</p>
+        </div>
+    </div>
+    <!--메인 컨테이너-->
+    <div id="posting-main-container">
+        <div id="posting-contents">
+            <div class="url">
+                <p>이미지 URL <input class="url-window" type="text"/></p>
+            </div>
+            <div class="mylocation">
+                <p>위치 <input class="mylocation-window" type="text"/></p>
+            </div>
+            <div class="mytime">
+                <p>날짜 및 시간 <input class="mytime-window" type="text"/></p>
+            </div>
+        </div>
+    </div>
+    <!--텍스트 컨테이너-->
+    <div id="mytext-container">
+        <div class="mytext">
+            <p>문구</p>
+        </div>
+        <div class="mytextbox">
+            <input class="mytextbox-window" type="text"/>
+        </div>
+    </div>
+    <!--작성완료 창-->
+    <div id="complete">
+        <button onclick="save_posting()" type="button" class="complete-button">작성완료</button>
+    </div>
+</div>
+</body>
+</html>
