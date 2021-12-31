@@ -10,6 +10,7 @@
             get_post()
             show_comment()
             have_token()
+            users_id()
         })
 
         function posting() {
@@ -20,6 +21,10 @@
             window.location.href = '/'
         }
 
+        function go_mypage() {
+            window.location.href = '/mypage'
+        }
+
         function have_token() {
             $.ajax({
                 type: "GET",
@@ -28,12 +33,17 @@
                 success: function (response) {
                     if (response['result'] == 'success') {
                         writer_id = response['id']
-                        $.cookie('mytoken', response['token']);
+                        {#$.cookie('mytoken', response['token']);#}
+                        return
 
+                    } else {
+                        alert('로그인 창으로 가서 토큰 받아오세요')
+                        window.location.href = '/login'
                     }
                 }
             })
         }
+
 
         function save_comment() {
             let comment = $('#comment-box').val()
@@ -50,25 +60,23 @@
 
         function get_post() {
             $.ajax({
-                        type: "GET",
-                        url: "/home",
-                        data: {},
-                        success: function (response) {
-                            let rows = response['post']
-                            let coms = response['post-com']
-                            console.log(coms)
-                            for (let i = 0; i < rows.length; i++) {
-                                let postid = rows[i]['postid']
-                                let url = rows[i]['url']
-                                let text = rows[i]['mytext']
-                                let location = rows[i]['mylocation']
-                                let mytime = rows[i]['mytime']
+                    type: "GET",
+                    url: "/home",
+                    data: {},
+                    success: function (response) {
+                        let rows = response['post']
+                        for (let i = 0; i < rows.length; i++) {
+                            let writerid = rows[i]['writerid']
+                            let url = rows[i]['url']
+                            let text = rows[i]['mytext']
+                            let location = rows[i]['mylocation']
+                            let mytime = rows[i]['mytime']
 
-                                let temp_html = `<div class="feed-info">
+                            let temp_html = `<div class="feed-info">
                                             <div class="info-left">
                                                 <img src="${url}">
                                                 <div class="info-left-txt">
-                                                    <h1 class="info-name"><p>${postid}</p></h1>
+                                                    <h1 class="info-name"><p>${writerid}</p></h1>
                                                     <h1 id="user-loca" class="info-location">${location}</h1>
                                                 </div>
                                             </div>
@@ -87,12 +95,12 @@
                                         </div>
                                         <div class="feed-footer">
                                             <div class="feed-comments">
-                                                <h3>로그인 아이디</h3>
+                                                <h3></h3>
                                                 <input id="comment-box" type="text" placeholder="댓글입력창"/>
                                             </div>
                                             <div></div>
                                             <div class="feed-buttons">
-                                                <button onclick="save_comment(${postid})">등록</button>
+                                                <button onclick="save_comment(${writerid})">등록</button>
                                                 <button onclick="#">삭제</button>
                                             </div>
                                             <div id="comment-list">
@@ -100,13 +108,13 @@
                                             </div>
                                         </div>
 `
-                                $(`#user-info-feed`).append(temp_html)
-
-                            }
+                            $(`#user-info-feed`).append(temp_html)
 
                         }
 
                     }
+
+                }
             )
         }
 
@@ -119,17 +127,32 @@
                 success: function (response) {
                     let rows = response['com']
                     for (let i = 0; i < rows.length; i++) {
-                        let comment = rows[i]['comments']
+                        let cmt = rows[i]['comments']
+                        let writers = rows[i]['writerid']
 
-                        let temp_html = `<div class="card">
-                                                    <p>${comment}</p>
-                                        </div>`
+                        let temp_html = `
+<div class="card">
+<p> ${writers} ${cmt}</p>
+</div>
+`
                         $(`#comment-list`).append(temp_html)
                     }
                 }
-            });
+            })
         }
 
+        function users_id() {
+            $.ajax({
+                type: 'GET',
+                url: '/homeid',
+                data: {},
+                success: function (response) {
+                    let rows = response['userid']
+                    let temp_html = `<p>${rows}</p>`
+                    $('#log_id').append(temp_html)
+                }
+            })
+         }
 
     </script>
 </head>
@@ -138,54 +161,17 @@
     <div id="header">
         <img src="https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2F20160928_67%2F8825sun_1475034432749qTixK_JPEG%2F%25BB%25E7%25BA%25BB_-page-000101.jpg&type=sc960_832">
         <ul id="header-users">
-            <li><a href="index.html"><img
-                    src="https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2F20160928_67%2F8825sun_1475034432749qTixK_JPEG%2F%25BB%25E7%25BA%25BB_-page-000101.jpg&type=sc960_832"></a>
+            <li><a href="#"><img
+                    src="https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2F20160928_67%2F8825sun_1475034432749qTixK_JPEG%2F%25BB%25E7%25BA%25BB_-page-000101.jpg&type=sc960_832"
+                    onclick="go_mypage()"></a>
             </li>
-
-            <li class="li-box"><p id="log_id"></p></li>
+{#<p>"{{user_id['writerid']}}"</p>#}
+            <li id="log_id"></li>
         </ul>
     </div>
     <div id="container">
         <div id="user-info-feed">
-            <div class="feed-info">
-                <div class="info-left">
-                    <img src="https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyMTA1MThfMTc3%2FMDAxNjIxMjY3MDg2NTQ2.ZhnLcAqf-EnZvjV5LJtmdbjNZ2y22EIgR_kAMGxncpYg.zIqc9WTNSxQ2enVTLlADSYYk5ki6pkrmnKHTJjoPKacg.JPEG.kthheart%2FIMG_0297.JPG&amp;type=sc960_832">
-                    <div class="info-left-txt">
-                        <h1 class="info-name">마이네임</h1>
-                        <h1 id="user-loca" class="info-location">부평 구청역</h1>
-                    </div>
-                </div>
-                <div class="info-right">
-                    <div></div>
-                    <h1 class="info-time">크리스마스 언저리</h1>
-                </div>
-            </div>
-            <div class="feed-container">
-                <div class="feed-post">
-                    <img src="https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyMTA1MThfMTc3%2FMDAxNjIxMjY3MDg2NTQ2.ZhnLcAqf-EnZvjV5LJtmdbjNZ2y22EIgR_kAMGxncpYg.zIqc9WTNSxQ2enVTLlADSYYk5ki6pkrmnKHTJjoPKacg.JPEG.kthheart%2FIMG_0297.JPG&amp;type=sc960_832">
-                </div>
-                <div class="feed-txt">
-                    <h3>오호라</h3>
-                </div>
-            </div>
-            <div class="feed-footer">
-                <div class="feed-comments">
-                    <h3>로그인 아이디</h3>
-                    <!--                <input  value="댓글입력창">-->
-                    <input id="comment-box" type="text" placeholder="댓글입력창"/>
-                </div>
-                <div></div>
-                <div class="feed-buttons">
-                    <button onclick="save_comment()">등록</button>
-                    <button onclick="#">삭제</button>
-                </div>
-                <div id="comment-list">
-                    <div class="card">
-                        <p>도레미파솔라시도</p>
-                        <p>귀여니</p>
-                    </div>
-                </div>
-            </div>
+
         </div>
     </div>
     <div id="footer">
@@ -194,7 +180,7 @@
         <div class="navbar">
             <button onclick="home()">홈</button>
             <button onclick="posting()">글쓰기</button>
-            <button onclick="home()">마이페이지</button>
+            <button onclick="go_mypage()">마이페이지</button>
         </div>
     </div>
 </div>
